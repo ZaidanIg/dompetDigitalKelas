@@ -1,0 +1,65 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dompet_digital_app
+    restart: unless-stopped
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=dompetDigitalDB
+      - DB_USER=postgres
+      - DB_PASSWORD=${DB_PASSWORD:-Asgardian13}
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  web:
+    image: nginx:alpine
+    container_name: dompet_digital_web
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - .:/var/www/html:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot_etc:/etc/letsencrypt
+      - certbot_var:/var/www/certbot
+    depends_on:
+      - app
+    networks:
+      - app_network
+
+  db:
+    image: postgres:16-alpine
+    container_name: dompet_digital_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dompetDigitalDB
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Asgardian13}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dompetDigitalDB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+
+volumes:
+  pgdata:
+    driver: local
+  certbot_etc:
+  certbot_var:
+
+networks:
+  app_network:
+    driver: bridge

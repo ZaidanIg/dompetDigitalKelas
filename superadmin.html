@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Super Admin Panel - Kas Kelas</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="assets/css/superadmin.css?v=1">
+</head>
+
+<body>
+
+    <div id="sa-loader">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <div class="sa-toast-container">
+        <div id="sa-toast" class="sa-toast">
+            Message here
+        </div>
+    </div>
+
+    <!-- Modal Reset Password -->
+    <div class="sa-modal-overlay" id="saModalResetPass">
+        <div class="sa-modal">
+            <h3>Reset Password Admin</h3>
+            <form id="formResetPass">
+                <input type="hidden" id="resetAdminId">
+                <div class="sa-form-group">
+                    <label>Password Baru</label>
+                    <input type="password" id="resetAdminPass" required placeholder="Masukkan password baru">
+                </div>
+                <div class="sa-form-actions">
+                    <button type="button" class="btn-sa-secondary"
+                        onclick="document.getElementById('saModalResetPass').classList.remove('show')">Batal</button>
+                    <button type="submit" class="btn-sa-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Edit Kelas -->
+    <div class="sa-modal-overlay" id="saModalEditKelas">
+        <div class="sa-modal">
+            <h3>Edit Kelas</h3>
+            <form id="formEditKelas">
+                <input type="hidden" id="editKelasId">
+                <div class="sa-form-group">
+                    <label>Nama Kelas</label>
+                    <input type="text" id="editKelasNama" required>
+                </div>
+                <div class="sa-form-actions">
+                    <button type="button" class="btn-sa-secondary"
+                        onclick="document.getElementById('saModalEditKelas').classList.remove('show')">Batal</button>
+                    <button type="submit" class="btn-sa-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah Siswa -->
+    <div class="sa-modal-overlay" id="saModalAddSiswa">
+        <div class="sa-modal">
+            <h3>Tambah Siswa ke <span id="addSiswaKelasLabel">Kelas</span></h3>
+            <form id="formAddSiswa">
+                <div class="sa-form-group">
+                    <label>NIS</label>
+                    <input type="text" name="nis" required placeholder="NIS Siswa">
+                </div>
+                <div class="sa-form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" name="name" required placeholder="Nama Siswa">
+                </div>
+                <div class="sa-form-group">
+                    <label>Password (Default: password)</label>
+                    <input type="password" name="password" placeholder="Kosongkan untuk default">
+                </div>
+                <div class="sa-form-actions">
+                    <button type="button" class="btn-sa-secondary"
+                        onclick="document.getElementById('saModalAddSiswa').classList.remove('show')">Batal</button>
+                    <button type="submit" class="btn-sa-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah Siswa Global -->
+    <div class="sa-modal-overlay" id="saModalGlobalAddSiswa">
+        <div class="sa-modal">
+            <h3>Tambah Siswa Baru</h3>
+            <form id="formGlobalAddSiswa">
+                <div class="sa-form-group">
+                    <label>Pilih Kelas</label>
+                    <select name="kelas_id" id="globalAddSiswaKelas" required>
+                        <!-- Loaded via JS -->
+                    </select>
+                </div>
+                <div class="sa-form-group">
+                    <label>NIS</label>
+                    <input type="text" name="nis" required placeholder="NIS Siswa">
+                </div>
+                <div class="sa-form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" name="name" required placeholder="Nama Siswa">
+                </div>
+                <div class="sa-form-group">
+                    <label>Password (Default: password)</label>
+                    <input type="password" name="password" placeholder="Kosongkan untuk default">
+                </div>
+                <div class="sa-form-actions">
+                    <button type="button" class="btn-sa-secondary"
+                        onclick="document.getElementById('saModalGlobalAddSiswa').classList.remove('show')">Batal</button>
+                    <button type="submit" class="btn-sa-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah Kelas -->
+    <div class="sa-modal-overlay" id="saModalAddKelas">
+        <div class="sa-modal">
+            <h3>Tambah Kelas Baru</h3>
+            <form id="formAddKelas">
+                <div class="sa-form-group">
+                    <label>Nama Kelas</label>
+                    <input type="text" name="nama" required placeholder="Contoh: X IPA 1">
+                </div>
+                <div class="sa-form-actions">
+                    <button type="button" class="btn-sa-secondary"
+                        onclick="document.getElementById('saModalAddKelas').classList.remove('show')">Batal</button>
+                    <button type="submit" class="btn-sa-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah Admin -->
+    <div class="sa-modal-overlay" id="saModalAddAdmin">
+        <div class="sa-modal">
+            <h3>Tambah Admin Baru</h3>
+            <form id="formAddAdmin">
+                <div class="sa-form-group">
+                    <label>Username / NIS</label>
+                    <input type="text" name="nis" required placeholder="NIS Admin">
+                </div>
+                <div class="sa-form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" name="name" required placeholder="Nama Admin">
+                </div>
+                <div class="sa-form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" required placeholder="Password">
+                </div>
+                <div class="sa-form-group">
+                    <label>Tugaskan ke Kelas</label>
+                    <select name="kelas_id" id="selectKelasForAdmin" required>
+                        <option value="">Pilih Kelas...</option>
+                        <!-- Loaded by JS -->
+                    </select>
+                </div>
+                <div class="sa-form-actions">
+                    <button type="button" class="btn-sa-secondary"
+                        onclick="document.getElementById('saModalAddAdmin').classList.remove('show')">Batal</button>
+                    <button type="submit" class="btn-sa-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="sa-app">
+
+        <!-- DASHBOARD VIEW -->
+        <section id="view-sa-dashboard" class="sa-view">
+            <div class="sa-header">
+                <div class="sa-header-title">
+                    <div>
+                        <h2>Super Admin</h2>
+                        <small>Sistem Kas Kelas</small>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="saLogout()" title="Logout"><i class="bi bi-power"></i></button>
+            </div>
+
+            <div class="sa-scrollable">
+                <div class="sa-saldo-card">
+                    <div class="saldo-label">Total Saldo Global</div>
+                    <div class="saldo-value" id="saGlobalSaldo">Rp 0</div>
+                </div>
+
+                <div class="sa-stats-grid">
+                    <div class="sa-stat-card">
+                        <div class="stat-value" id="saGlobalKelas">0</div>
+                        <div class="stat-label">Kelas</div>
+                    </div>
+                    <div class="sa-stat-card">
+                        <div class="stat-value" id="saGlobalAdmin">0</div>
+                        <div class="stat-label">Admin</div>
+                    </div>
+                    <div class="sa-stat-card">
+                        <div class="stat-value" id="saGlobalSiswa">0</div>
+                        <div class="stat-label">Siswa</div>
+                    </div>
+                </div>
+
+                <div class="sa-section-title">Aksi Cepat</div>
+                <div class="sa-action-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="sa-action-btn" onclick="showSAView('sa-kelas')">
+                        <i class="bi bi-plus-square"></i>
+                        <span>Kelas</span>
+                    </div>
+                    <div class="sa-action-btn" onclick="showSAView('sa-admin')">
+                        <i class="bi bi-person-badge"></i>
+                        <span>Admin</span>
+                    </div>
+                    <div class="sa-action-btn" onclick="openGlobalAddSiswaModal()">
+                        <i class="bi bi-person-plus"></i>
+                        <span>Siswa</span>
+                    </div>
+                </div>
+
+                <div class="sa-section-title d-flex justify-content-between align-items-center"
+                    style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Ringkasan Per Kelas</span>
+                    <span style="font-size: 0.7rem; color: var(--sa-accent); cursor: pointer;"
+                        onclick="loadSADashboard()">Refresh <i class="bi bi-arrow-clockwise"></i></span>
+                </div>
+                <div class="sa-kelas-list" id="saDashboardKelasList">
+                    <!-- Loaded by JS -->
+                </div>
+            </div>
+
+            <nav class="sa-bottom-nav">
+                <a class="sa-nav-item active" onclick="showSAView('sa-dashboard')"><i
+                        class="bi bi-house-door-fill"></i>Dashboard</a>
+                <a class="sa-nav-item" onclick="showSAView('sa-kelas')"><i class="bi bi-diagram-3"></i>Kelas</a>
+                <a class="sa-nav-item" onclick="showSAView('sa-admin')"><i class="bi bi-person-badge"></i>Admin</a>
+            </nav>
+        </section>
+
+        <!-- MANAJEMEN KELAS VIEW -->
+        <section id="view-sa-kelas" class="sa-view">
+            <div class="sa-header">
+                <div class="sa-header-title">
+                    <h2>Manajemen Kelas</h2>
+                </div>
+            </div>
+
+            <div class="sa-scrollable">
+                <div class="sa-search-bar">
+                    <div class="search-input-wrap">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="searchKelas" placeholder="Cari nama kelas...">
+                    </div>
+                </div>
+
+                <div class="sa-list" id="saKelasList">
+                    <!-- Loaded by JS -->
+                </div>
+
+                <div style="padding: 1rem 1.25rem 1.5rem;">
+                    <button class="btn-sa-add" onclick="openAddKelasModal()">
+                        <i class="bi bi-plus-circle me-2"></i> Tambah Kelas Baru
+                    </button>
+                </div>
+            </div>
+
+            <nav class="sa-bottom-nav">
+                <a class="sa-nav-item" onclick="showSAView('sa-dashboard')"><i
+                        class="bi bi-house-door"></i>Dashboard</a>
+                <a class="sa-nav-item active" onclick="showSAView('sa-kelas')"><i
+                        class="bi bi-diagram-3-fill"></i>Kelas</a>
+                <a class="sa-nav-item" onclick="showSAView('sa-admin')"><i class="bi bi-person-badge"></i>Admin</a>
+            </nav>
+        </section>
+
+        <!-- MANAJEMEN ADMIN VIEW -->
+        <section id="view-sa-admin" class="sa-view">
+            <div class="sa-header">
+                <div class="sa-header-title">
+                    <h2>Manajemen Admin</h2>
+                </div>
+            </div>
+
+            <div class="sa-scrollable">
+                <div class="sa-search-bar">
+                    <div class="search-input-wrap">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="searchAdmin" placeholder="Cari nama atau NIS...">
+                    </div>
+                </div>
+
+                <div class="sa-filter-bar">
+                    <select id="filterKelasAdmin" style="width: 100%;">
+                        <option value="">Semua Kelas</option>
+                        <!-- Loaded by JS -->
+                    </select>
+                </div>
+
+                <div class="sa-list" id="saAdminList">
+                    <!-- Loaded by JS -->
+                </div>
+
+                <div class="sa-pagination" id="saAdminPagination">
+                    <!-- Loaded by JS -->
+                </div>
+
+                <div style="padding: 1rem 1.25rem 1.5rem;">
+                    <button class="btn-sa-add" onclick="openAddAdminModal()">
+                        <i class="bi bi-person-plus me-2"></i> Tambah Admin Baru
+                    </button>
+                </div>
+            </div>
+
+            <nav class="sa-bottom-nav">
+                <a class="sa-nav-item" onclick="showSAView('sa-dashboard')"><i
+                        class="bi bi-house-door"></i>Dashboard</a>
+                <a class="sa-nav-item" onclick="showSAView('sa-kelas')"><i class="bi bi-diagram-3"></i>Kelas</a>
+                <a class="sa-nav-item active" onclick="showSAView('sa-admin')"><i
+                        class="bi bi-person-badge-fill"></i>Admin</a>
+            </nav>
+        </section>
+
+        <!-- DETAIL KELAS VIEW -->
+        <section id="view-sa-detail-kelas" class="sa-view">
+            <div class="sa-back-header">
+                <button class="btn-back" onclick="showSAView('sa-dashboard')"><i class="bi bi-arrow-left"></i></button>
+                <h2 id="detailKelasNama">Detail Kelas</h2>
+            </div>
+
+            <div class="sa-scrollable">
+                <div class="sa-detail-stats">
+                    <div class="sa-detail-stat">
+                        <div class="stat-label">Total Saldo</div>
+                        <div class="stat-value success" id="detailKelasSaldo">Rp 0</div>
+                    </div>
+                    <div class="sa-detail-stat">
+                        <div class="stat-label">Masuk Bulan Ini</div>
+                        <div class="stat-value primary" id="detailKelasBulan">Rp 0</div>
+                    </div>
+                </div>
+
+                <div class="sa-tabs">
+                    <div class="sa-tab active" id="tabDetailTx" onclick="switchDetailTab('tx')">Transaksi</div>
+                    <div class="sa-tab" id="tabDetailSiswa" onclick="switchDetailTab('siswa')">Siswa</div>
+                </div>
+
+                <!-- Tab Transaksi -->
+                <div id="contentDetailTx">
+                    <div class="sa-filter-bar" style="display: flex; gap: 0.5rem;">
+                        <select id="detailTxType" style="flex: 1;">
+                            <option value="all">Semua Transaksi</option>
+                            <option value="in">Pemasukan Saja</option>
+                            <option value="out">Pengeluaran Saja</option>
+                        </select>
+                    </div>
+                    <div class="sa-tx-list" id="saDetailTxList">
+                        <!-- Loaded by JS -->
+                    </div>
+                    <div class="sa-pagination" id="saDetailTxPagination">
+                        <!-- Loaded by JS -->
+                    </div>
+                </div>
+
+                <!-- Tab Siswa -->
+                <div id="contentDetailSiswa" style="display: none;">
+                    <div style="padding: 1rem 1.25rem 0.5rem;">
+                        <button class="btn-sa-add" onclick="openAddSiswaModal()">
+                            <i class="bi bi-person-plus me-2"></i> Tambah Siswa Baru
+                        </button>
+                    </div>
+                    <div class="sa-search-bar" style="padding-top: 0;">
+                        <div class="search-input-wrap">
+                            <i class="bi bi-search"></i>
+                            <input type="text" id="detailSiswaSearch" placeholder="Cari siswa di kelas ini...">
+                        </div>
+                    </div>
+                    <div class="sa-list" id="saDetailSiswaList">
+                        <!-- Loaded by JS -->
+                    </div>
+                    <div class="sa-pagination" id="saDetailSiswaPagination">
+                        <!-- Loaded by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script src="assets/js/superadmin.js?v=5"></script>
+</body>
+
+</html>
