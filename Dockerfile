@@ -28,10 +28,11 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . /var/www/html/
 
-# Permissions
-RUN chown -R www-data:www-data /var/www/html \
+# Permissions & Entrypoint
+RUN chmod +x /var/www/html/docker-entrypoint.sh \
+    && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
 EXPOSE 9000
 
-CMD ["php-fpm"]
+ENTRYPOINT ["/var/www/html/docker-entrypoint.sh"]
