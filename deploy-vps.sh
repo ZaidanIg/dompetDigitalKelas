@@ -63,6 +63,13 @@ apt update && apt upgrade -y
 echo -e "\n${YELLOW}[2/7] Menginstal Nginx, PHP-FPM, PostgreSQL, Git, dan Certbot...${NC}"
 apt install -y software-properties-common curl git ufw
 
+# Matikan Apache jika ada agar port 80 tidak bentrok
+if systemctl is-active --quiet apache2 2>/dev/null; then
+    echo -e "${YELLOW}Mematikan Apache2 agar port 80 dapat digunakan oleh Nginx...${NC}"
+    systemctl stop apache2 2>/dev/null || true
+    systemctl disable apache2 2>/dev/null || true
+fi
+
 # Tambahkan repository PHP jika di Ubuntu
 if command -v add-apt-repository >/dev/null 2>&1; then
     add-apt-repository -y ppa:ondrej/php || true
@@ -83,6 +90,17 @@ fi
 # Install Nginx, PostgreSQL, Certbot
 apt install -y nginx postgresql postgresql-contrib certbot python3-certbot-nginx
 
+# Pastikan PHP-FPM service aktif
+systemctl start php${PHP_VER}-fpm 2>/dev/null || systemctl start php*-fpm 2>/dev/null || true
+systemctl enable php${PHP_VER}-fpm 2>/dev/null || true
+
+# Deteksi socket PHP-FPM yang aktif
+PHP_SOCK=$(find /run/php/ -name "php*-fpm.sock" 2>/dev/null | head -n 1)
+if [ -z "$PHP_SOCK" ]; then
+    PHP_SOCK="/run/php/php${PHP_VER}-fpm.sock"
+fi
+echo -e "Menggunakan PHP-FPM Socket: ${GREEN}${PHP_SOCK}${NC}"
+
 # 3. Konfigurasi Database PostgreSQL
 echo -e "\n${YELLOW}[3/7] Mengonfigurasi PostgreSQL...${NC}"
 systemctl start postgresql
@@ -93,14 +111,19 @@ sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname = '${DB_NAME}
 sudo -u postgres psql -c "CREATE DATABASE \"${DB_NAME}\";"
 
 # 4. Menyiapkan File Aplikasi
-echo -e "\n${YELLOW}[4/7] Menyalin file aplikasi ke ${APP_DIR}...${NC}"
+echo -e "\n${YELLOW}[4/7] Menyiapkan file aplikasi di ${APP_DIR}...${NC}"
 mkdir -p ${APP_DIR}
-cp -r ./* ${APP_DIR}/ 2>/dev/null || true
+
+# Jika script dijalankan dari dalam repo, salin file ke APP_DIR jika berbeda
+CURRENT_DIR=$(pwd)
+if [ "$CURRENT_DIR" != "$APP_DIR" ]; then
+    cp -r ./* ${APP_DIR}/ 2>/dev/null || true
+fi
 
 # Buat file .env di server
 cat <<EOF > ${APP_DIR}/.env
 APP_ENV=production
-APP_URL=http://${DOMAIN_NAME}
+APP_URL=https://${DOMAIN_NAME}
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=${DB_NAME}
@@ -155,7 +178,7 @@ server {
     # PHP-FPM Handler
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php${PHP_VER}-fpm.sock;
+        fastcgi_pass unix:${PHP_SOCK};
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
     }
 
@@ -174,9 +197,13 @@ EOF
 ln -sf ${NGINX_CONF} /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 
-# Test & Reload Nginx
+# Test Nginx Config
 nginx -t
-systemctl reload nginx
+
+# Pastikan Nginx di-start & di-enable (BUKAN reload, karena jika belum start maka reload akan gagal)
+echo -e "Menyalakan service Nginx..."
+systemctl enable nginx
+systemctl restart nginx
 
 # 6. Konfigurasi Firewall UFW
 echo -e "\n${YELLOW}[7/7] Mengaktifkan Firewall (SSH, HTTP, HTTPS)...${NC}"
@@ -188,8 +215,7 @@ echo "y" | ufw enable || true
 # 7. Penerbitan SSL Gratis Let's Encrypt
 echo -e "\n${YELLOW}Menerbitkan Sertifikat SSL Gratis (HTTPS) via Let's Encrypt...${NC}"
 certbot --nginx -d ${DOMAIN_NAME} --non-interactive --agree-tos --email ${SSL_EMAIL} --redirect || {
-    echo -e "${YELLOW}Catatan: Penerbitan SSL otomatis memerlukan domain sudah terarah (pointed) ke IP VPS.${NC}"
-    echo -e "Jika DNS belum propagasi, jalankan perintah ini nanti:"
+    echo -e "${YELLOW}Catatan: Jika Let's Encrypt belum berhasil, jalankan perintah ini setelah DNS aktif:${NC}"
     echo -e "   ${GREEN}sudo certbot --nginx -d ${DOMAIN_NAME}${NC}"
 }
 
@@ -200,11 +226,11 @@ echo -e "${GREEN}=====================================================${NC}"
 echo -e "Aplikasi Anda sekarang dapat diakses di:"
 echo -e "👉 ${BLUE}http://${DOMAIN_NAME}${NC} (atau ${GREEN}https://${DOMAIN_NAME}${NC})"
 echo ""
-echo -e "Kredensial Login:"
+echo -e "Kredensial Login Bawaan:"
 echo -e " 👑 Super Admin : NIS ${YELLOW}superadmin${NC} | Password ${YELLOW}admin123${NC}"
 echo -e " 👨‍💼 Admin Kelas : NIS ${YELLOW}admin1${NC}     | Password ${YELLOW}password${NC}"
 echo -e " 🎒 Siswa       : NIS ${YELLOW}siswa1${NC}     | Password ${YELLOW}password${NC}"
 echo ""
-EOF
-
-chmod +x deploy-vps.sh
+echo -e "Untuk membuat akun Superadmin baru/kustom, jalankan:"
+echo -e "   ${GREEN}php create-superadmin.php${NC}"
+echo ""
